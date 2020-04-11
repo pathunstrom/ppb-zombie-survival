@@ -2,9 +2,7 @@ from time import monotonic
 
 from ppb import buttons as button
 from ppb import events
-from ppb import keycodes as key
 from ppb import Sprite
-from ppb import Vector
 from ppb.assets import Square
 
 from survival import utils
@@ -38,12 +36,6 @@ class Player(Sprite):
     def on_button_released(self, event: events.ButtonReleased, signal):
         self.state.on_button_released(event, signal)
 
-    def on_key_pressed(self, event: events.KeyPressed, signal):
-        self.state.on_key_pressed(event, signal)
-
-    def on_key_released(self, event: events.KeyReleased, signal):
-        self.state.on_key_released(event, signal)
-
     def on_mouse_motion(self, event: events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)
 
@@ -60,12 +52,6 @@ class State:
     def on_button_released(self, event, signal):
         pass
 
-    def on_key_pressed(self, event, signal):
-        pass
-
-    def on_key_released(self, event, signal):
-        pass
-
     def on_mouse_motion(self, event, signal):
         pass
 
@@ -75,32 +61,10 @@ class State:
 
 class Neutral(State):
     speed = 3  # TODO: CONFIG
-    vertical_value = 0
-    horizontal_value = 0
 
     def on_button_released(self, event, signal):
         if event.button == button.Primary:
             self.parent.state = Slash(self.parent, self)
-
-    def on_key_pressed(self, event, signal):
-        if event.key == key.W:
-            self.vertical_value += 1
-        elif event.key == key.S:
-            self.vertical_value += -1
-        elif event.key == key.A:
-            self.horizontal_value += -1
-        elif event.key == key.D:
-            self.horizontal_value += 1
-
-    def on_key_released(self, event, signal):
-        if event.key == key.W:
-            self.vertical_value += -1
-        elif event.key == key.S:
-            self.vertical_value += 1
-        elif event.key == key.A:
-            self.horizontal_value += 1
-        elif event.key == key.D:
-            self.horizontal_value += -1
 
     def on_mouse_motion(self, event, signal):
         self.parent.target_facing = (
@@ -112,9 +76,8 @@ class Neutral(State):
             self.parent.facing = calculate_rotation(
                 self.parent.facing, self.parent.target_facing
             ).normalize()
-        direction_vector = Vector(self.horizontal_value, self.vertical_value)
-        if direction_vector:
-            self.parent.position += direction_vector.scale(self.speed * event.time_delta)
+        if event.controls.walk:
+            self.parent.position += event.controls.walk.scale(self.speed * event.time_delta)
 
 
 class Slash(State):
