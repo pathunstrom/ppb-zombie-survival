@@ -7,6 +7,7 @@ from ppb.assets import Square
 
 from survival import utils
 from survival.enemies import Body
+from survival.systems import DashRequested
 
 calculate_rotation = utils.asymptotic_average_builder(12)
 
@@ -35,6 +36,9 @@ class Player(Sprite):
 
     def on_button_released(self, event: events.ButtonReleased, signal):
         self.state.on_button_released(event, signal)
+
+    def on_dash_requested(self, event: DashRequested, signal):
+        print(f"on_dash_requested: {event}")
 
     def on_mouse_motion(self, event: events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)

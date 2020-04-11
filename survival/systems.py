@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from ppb import events as ppb_events
 from ppb import keycodes as key
 from ppb import Vector
@@ -38,6 +40,8 @@ class Controller(System):
             self.horizontal += -1
         elif event.key == key.D:
             self.horizontal += 1
+        elif event.key == key.Space:
+            signal(DashRequested())
 
     def on_key_released(self, event: ppb_events.KeyReleased, signal):
         if event.key == key.W:
@@ -48,3 +52,9 @@ class Controller(System):
             self.horizontal += 1
         elif event.key == key.D:
             self.horizontal += -1
+
+
+@dataclass
+class DashRequested:
+    scene = None
+    controls = None
