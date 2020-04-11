@@ -23,6 +23,11 @@ def asymptotic_average_builder(new_part: Union[float, int]):
     return interpolate
 
 
-def quadratic_ease_in (run_time, start, change, duration):
+def quadratic_ease_in(run_time, start, change, duration):
     run_time /= duration
     return change*run_time*run_time + start
+
+
+def quadratic_ease_out(run_time, start, change, duration):
+    run_time /= duration
+    return -change * run_time * (run_time - 2) + start
