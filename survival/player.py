@@ -11,7 +11,7 @@ from survival.enemies import Body
 calculate_rotation = utils.asymptotic_average_builder(12)
 
 
-class Hitbox(Sprite):
+class HurtBox(Sprite):
     image = Square(150, 40, 40)
     life_span = .20
 
@@ -81,7 +81,7 @@ class Neutral(State):
 
 
 class Slash(State):
-    duration = .15  # TODO: CONFIG
+    duration = .18  # TODO: CONFIG
     initial_degrees = 60
     change_in_degrees = -80
 
@@ -105,7 +105,7 @@ class Slash(State):
                 )
             )
             event.scene.add(
-                Hitbox(
+                HurtBox(
                     position=self.parent.position + current_offset.scale(1)
                 )
             )
