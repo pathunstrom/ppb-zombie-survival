@@ -9,7 +9,7 @@ calculate_rotation = asymptotic_average_builder(12)
 
 
 class Hitbox(Sprite):
-    pass
+    image = Square(150, 40, 40)
 
 
 class Player(Sprite):
