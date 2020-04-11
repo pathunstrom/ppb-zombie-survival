@@ -1,3 +1,5 @@
+from time import monotonic
+
 from ppb import buttons as button
 from ppb import events
 from ppb import keycodes as key
@@ -12,6 +14,15 @@ calculate_rotation = asymptotic_average_builder(12)
 
 class Hitbox(Sprite):
     image = Square(150, 40, 40)
+    life_span = .20
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.start = monotonic()
+
+    def on_update(self, event, signal):
+        if monotonic() >= self.start + self.life_span:
+            event.scene.remove(self)
 
 
 class Player(Sprite):
