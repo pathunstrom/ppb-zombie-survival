@@ -21,3 +21,8 @@ def asymptotic_average_builder(new_part: Union[float, int]):
         return old_input * old + new_input * new
 
     return interpolate
+
+
+def quadratic_ease_in (run_time, start, change, duration):
+    run_time /= duration
+    return change*run_time*run_time + start

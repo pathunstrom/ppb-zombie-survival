@@ -7,9 +7,10 @@ from ppb import Sprite
 from ppb import Vector
 from ppb.assets import Square
 
-from survival.utils import asymptotic_average_builder
+from survival import utils
+from survival.enemies import Body
 
-calculate_rotation = asymptotic_average_builder(12)
+calculate_rotation = utils.asymptotic_average_builder(12)
 
 
 class Hitbox(Sprite):
@@ -79,11 +80,7 @@ class Neutral(State):
 
     def on_button_released(self, event, signal):
         if event.button == button.Primary:
-            event.scene.add(
-                Hitbox(
-                    position=self.parent.position + self.parent.facing * 2
-                )
-            )
+            self.parent.state = Slash(self.parent, self)
 
     def on_key_pressed(self, event, signal):
         if event.key == key.W:
@@ -118,3 +115,34 @@ class Neutral(State):
         direction_vector = Vector(self.horizontal_value, self.vertical_value)
         if direction_vector:
             self.parent.position += direction_vector.scale(self.speed * event.time_delta)
+
+
+class Slash(State):
+    duration = .15  # TODO: CONFIG
+    initial_degrees = 60
+    change_in_degrees = -80
+
+    def __init__(self, parent, last_state):
+        super().__init__(parent, last_state)
+        self.start_time = monotonic()
+
+    def on_update(self, event, signal):
+        current_time = monotonic()
+        if current_time >= self.start_time + self.duration:
+            event.scene.add(Body(position=self.parent.position + self.parent.facing))
+            self.parent.state = self.last_state
+        else:
+            run_time = current_time - self.start_time
+            current_offset = self.parent.facing.rotate(
+                utils.quadratic_ease_in(
+                    run_time,
+                    self.initial_degrees,
+                    self.change_in_degrees,
+                    self.duration
+                )
+            )
+            event.scene.add(
+                Hitbox(
+                    position=self.parent.position + current_offset.scale(1)
+                )
+            )
