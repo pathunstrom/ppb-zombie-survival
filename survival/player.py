@@ -5,7 +5,9 @@ from typing import Type
 from ppb import buttons as button
 from ppb import events
 from ppb import Sprite
+from ppb import Vector
 from ppb.assets import Square
+from ppb.flags import DoNotRender
 
 from survival import utils
 from survival.enemies import Body
@@ -25,6 +27,34 @@ class HurtBox(Sprite):
     def on_update(self, event, _):
         if monotonic() >= self.start + self.life_span:
             event.scene.remove(self)
+
+
+class ChargeBox(Sprite):
+    """Temporary debug item."""
+    parent: 'Player'
+    value: int = 4
+    idle_image = DoNotRender
+    active_image = Square(50, 70, 200)
+    active = False
+    offsets = [1, 0.33, -0.33, -1]
+    size = 0.25
+
+    @property
+    def image(self):
+        return self.active_image if self.active else self.idle_image
+
+    def on_pre_render(self, event, signal):
+        behind = self.parent.facing * -0.8
+        home = behind.rotate(-90).scale(0.40)
+        self.position = self.parent.position + behind + (home * self.offsets[self.value - 1])
+        self.facing = self.parent.facing
+
+    def on_increased_charge_level(self, event: 'IncreasedChargeLevel', signal):
+        if event.level >= self.value:
+            self.active = True
+
+    def on_charge_ended(self, event: 'ChargeEnded', signal):
+        self.active = False
 
 
 class Player(Sprite):
