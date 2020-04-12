@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from ppb import buttons as button
 from ppb import events as ppb_events
 from ppb import keycodes as key
 from ppb import Vector
@@ -32,29 +33,36 @@ class Controller(System):
         )
 
     def on_key_pressed(self, event: ppb_events.KeyPressed, signal):
-        if event.key == key.W:
+        if event.key is key.W:
             self.vertical += 1
-        elif event.key == key.S:
+        elif event.key is key.S:
             self.vertical += -1
-        elif event.key == key.A:
+        elif event.key is key.A:
             self.horizontal += -1
-        elif event.key == key.D:
+        elif event.key is key.D:
             self.horizontal += 1
-        elif event.key == key.Space:
-            print("Space pressed.")
+        elif event.key is key.Space:
             signal(ChargeDash())
 
     def on_key_released(self, event: ppb_events.KeyReleased, signal):
-        if event.key == key.W:
+        if event.key is key.W:
             self.vertical += -1
-        elif event.key == key.S:
+        elif event.key is key.S:
             self.vertical += 1
-        elif event.key == key.A:
+        elif event.key is key.A:
             self.horizontal += 1
-        elif event.key == key.D:
+        elif event.key is key.D:
             self.horizontal += -1
-        elif event.key == key.Space:
+        elif event.key is key.Space:
             signal(DashRequested())
+
+    def on_button_pressed(self, event: ppb_events.ButtonPressed, signal):
+        if event.button is button.Primary:
+            signal(ChargeSlash())
+
+    def on_button_released(self, event: ppb_events.ButtonReleased, signal):
+        if event.button is button.Primary:
+            signal(SlashRequested())
 
 
 @dataclass
@@ -65,5 +73,17 @@ class ChargeDash:
 
 @dataclass
 class DashRequested:
+    scene = None
+    controls = None
+
+
+@dataclass
+class ChargeSlash:
+    scene = None
+    controls = None
+
+
+@dataclass
+class SlashRequested:
     scene = None
     controls = None

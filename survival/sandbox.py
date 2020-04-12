@@ -1,7 +1,6 @@
 from ppb import BaseScene
 
-from ppb import Vector
-
+from survival.enemies import Body
 from survival.player import Player
 from survival.player import ChargeBox
 from survival.utils import asymptotic_average_builder
@@ -19,6 +18,8 @@ class Sandbox(BaseScene):
         self.add(player)
         for x in range(1, 5):
             self.add(ChargeBox(parent=player, value=x))
+        for x in range(2, 11, 2):
+            self.add(Body(position=(0, x)))
 
     def on_pre_render(self, event, signal):
         player = next(self.get(kind=Player))

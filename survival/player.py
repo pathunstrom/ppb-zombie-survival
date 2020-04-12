@@ -2,16 +2,15 @@ from dataclasses import dataclass
 from time import monotonic
 from typing import Type
 
-from ppb import buttons as button
 from ppb import events
 from ppb import Sprite
-from ppb import Vector
 from ppb.assets import Square
 from ppb.flags import DoNotRender
 
 from survival import utils
 from survival.enemies import Body
 from survival.systems import DashRequested
+from survival.systems import SlashRequested
 
 calculate_rotation = utils.asymptotic_average_builder(12)
 
@@ -62,20 +61,24 @@ class Player(Sprite):
     target_facing = None
     layer = 5
     dashed_at = None
+    slashed_at = None
     charge_level = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.state = Neutral(self, None)
 
-    def on_button_released(self, event: events.ButtonReleased, signal):
-        self.state.on_button_released(event, signal)
+    def on_charge_slash(self, event, signal):
+        self.state.on_charge_slash(event, signal)
+
+    def on_charge_dash(self, event, signal):
+        self.state.on_charge_dash(event, signal)
 
     def on_dash_requested(self, event: DashRequested, signal):
         self.state.on_dash_requested(event, signal)
 
-    def on_charge_dash(self, event, signal):
-        self.state.on_charge_dash(event, signal)
+    def on_slash_requested(self, event: SlashRequested, signal):
+        self.state.on_slash_requested(event, signal)
 
     def on_mouse_motion(self, event: events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)
@@ -92,13 +95,16 @@ class State:
         self.parent = parent
         self.return_state = return_state
 
-    def on_button_released(self, event, signal):
-        pass
-
     def on_charge_dash(self, event, signal):
         pass
 
+    def on_charge_slash(self, event, signal):
+        pass
+
     def on_dash_requested(self, event, signal):
+        pass
+
+    def on_slash_requested(self, event, signal):
         pass
 
     def on_mouse_motion(self, event, signal):
@@ -156,14 +162,15 @@ class Dash(TimedState):
     start_location = None
     duration = 0.25  # TODO: CONFIG
     start_time = None
-    dash_lengths = [3, 4, 5, 6]  # TODO: CONFIG
+    dash_lengths = [2, 3, 4, 5, 6]  # TODO: CONFIG
 
     def on_update(self, event, signal):
         super().on_update(event, signal)
         if self.target_change is None:
-            target_location = self.parent.target_facing.scale(self.dash_lengths[self.parent.charge_level - 1])
+            target_location = self.parent.target_facing.scale(self.dash_lengths[self.parent.charge_level])
             self.target_change = target_location
             self.start_location = self.parent.position
+            self.parent.charge_level = 0
         run_time = monotonic() - self.start_time
         self.parent.position = utils.quadratic_ease_out(
             run_time,
@@ -184,10 +191,12 @@ class DashCharge(ChargeState):
 class Neutral(State):
     speed = 3  # TODO: CONFIG
     dash_cool_down = 0.75  # TODO: CONFIG
+    slash_cool_down = 0.43  # TODO: CONFIG
 
-    def on_button_released(self, event, signal):
-        if event.button == button.Primary:
-            self.parent.state = Slash(self.parent, self)
+    def on_charge_slash(self, event, signal):
+        now = monotonic()
+        if self.parent.slashed_at is None or self.parent.slashed_at + self.slash_cool_down:
+            self.parent.state = SwordCharge(self.parent, self)
 
     def on_charge_dash(self, event, signal):
         now = monotonic()
