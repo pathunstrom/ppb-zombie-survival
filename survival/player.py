@@ -20,7 +20,7 @@ class HurtBox(Sprite):
         super().__init__(**kwargs)
         self.start = monotonic()
 
-    def on_update(self, event, signal):
+    def on_update(self, event, _):
         if monotonic() >= self.start + self.life_span:
             event.scene.remove(self)
 
@@ -84,7 +84,7 @@ class TimedState(State):
 class Dash(TimedState):
     target_change = None
     start_location = None
-    duration = 0.25  #TODO: CONFIG
+    duration = 0.25  # TODO: CONFIG
     start_time = None
     dash_length = 4  # TODO: CONFIG
 
