@@ -111,7 +111,7 @@ class State:
 
 
 class ChargeState(State):
-    level_timer = 0.25
+    level_timer = 0.4
     level = 0
     state_to_enter: Type
 
