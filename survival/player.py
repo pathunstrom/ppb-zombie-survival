@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from time import monotonic
+from typing import Type
 
 from ppb import buttons as button
 from ppb import events
@@ -29,6 +31,8 @@ class Player(Sprite):
     image = Square(200, 55, 40)
     target_facing = None
     layer = 5
+    dashed_at = None
+    charge_level = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -40,6 +44,9 @@ class Player(Sprite):
     def on_dash_requested(self, event: DashRequested, signal):
         self.state.on_dash_requested(event, signal)
 
+    def on_charge_dash(self, event, signal):
+        self.state.on_charge_dash(event, signal)
+
     def on_mouse_motion(self, event: events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)
 
@@ -47,23 +54,56 @@ class Player(Sprite):
         self.state.on_update(event, signal)
 
 
+# Player States
+
 class State:
 
     def __init__(self, parent, return_state):
         self.parent = parent
-        self.last_state = return_state
+        self.return_state = return_state
 
     def on_button_released(self, event, signal):
+        pass
+
+    def on_charge_dash(self, event, signal):
         pass
 
     def on_dash_requested(self, event, signal):
         pass
 
     def on_mouse_motion(self, event, signal):
-        pass
+        self.parent.target_facing = (
+                event.position - self.parent.position
+        ).normalize()
 
     def on_update(self, event, signal):
         pass
+
+
+class ChargeState(State):
+    level_timer = 0.25
+    level = 0
+    state_to_enter: Type
+
+    def __init__(self, parent, return_state):
+        super().__init__(parent, return_state)
+        self.start_time = monotonic()
+        self.levels = [
+            self.start_time + (self.level_timer * level)
+            for level
+            in range(1, 5)
+        ]
+
+    def on_update(self, event, signal):
+        now = monotonic()
+        if self.level < 4 and now >= self.levels[self.level]:
+            self.level += 1
+            signal(IncreasedChargeLevel(self.level))
+
+    def exit_stance(self, signal):
+        self.parent.charge_level = self.level
+        self.parent.state = self.state_to_enter(self.parent, self.return_state)
+        signal(ChargeEnded(self.level))
 
 
 class TimedState(State):
@@ -77,7 +117,7 @@ class TimedState(State):
     def on_update(self, event, signal):
         now = monotonic()
         if now >= self.start_time + self.duration:
-            self.parent.state = self.last_state
+            self.parent.state = self.return_state
             return True
 
 
@@ -86,12 +126,12 @@ class Dash(TimedState):
     start_location = None
     duration = 0.25  # TODO: CONFIG
     start_time = None
-    dash_length = 4  # TODO: CONFIG
+    dash_lengths = [3, 4, 5, 6]  # TODO: CONFIG
 
     def on_update(self, event, signal):
         super().on_update(event, signal)
         if self.target_change is None:
-            target_location = self.parent.target_facing.scale(self.dash_length)
+            target_location = self.parent.target_facing.scale(self.dash_lengths[self.parent.charge_level - 1])
             self.target_change = target_location
             self.start_location = self.parent.position
         run_time = monotonic() - self.start_time
@@ -103,25 +143,26 @@ class Dash(TimedState):
         )
 
 
+class DashCharge(ChargeState):
+    state_to_enter = Dash
+
+    def on_dash_requested(self, event, signal):
+        self.parent.dashed_at = monotonic()
+        self.exit_stance(signal)
+
+
 class Neutral(State):
     speed = 3  # TODO: CONFIG
     dash_cool_down = 0.75  # TODO: CONFIG
-    dashed_at = None
 
     def on_button_released(self, event, signal):
         if event.button == button.Primary:
             self.parent.state = Slash(self.parent, self)
 
-    def on_dash_requested(self, event, signal):
+    def on_charge_dash(self, event, signal):
         now = monotonic()
-        if self.dashed_at is None or self.dashed_at + self.dash_cool_down <= now:
-            self.dashed_at = now
-            self.parent.state = Dash(self.parent, self)
-
-    def on_mouse_motion(self, event, signal):
-        self.parent.target_facing = (
-                event.position - self.parent.position
-        ).normalize()
+        if self.parent.dashed_at is None or self.parent.dashed_at + self.dash_cool_down <= now:
+            self.parent.state = DashCharge(self.parent, self)
 
     def on_update(self, event, signal):
         if self.parent.target_facing is not None:
@@ -159,3 +200,20 @@ class Slash(TimedState):
                 position=self.parent.position + current_offset.scale(1)
             )
         )
+
+
+class SwordCharge(ChargeState):
+    state_to_enter = Slash
+
+    def on_slash_requested(self, _, signal):
+        self.exit_stance(signal)
+
+
+@dataclass
+class IncreasedChargeLevel:
+    level: int
+
+
+@dataclass
+class ChargeEnded:
+    level: int

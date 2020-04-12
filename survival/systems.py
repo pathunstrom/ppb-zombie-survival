@@ -41,7 +41,8 @@ class Controller(System):
         elif event.key == key.D:
             self.horizontal += 1
         elif event.key == key.Space:
-            signal(DashRequested())
+            print("Space pressed.")
+            signal(ChargeDash())
 
     def on_key_released(self, event: ppb_events.KeyReleased, signal):
         if event.key == key.W:
@@ -52,6 +53,14 @@ class Controller(System):
             self.horizontal += 1
         elif event.key == key.D:
             self.horizontal += -1
+        elif event.key == key.Space:
+            signal(DashRequested())
+
+
+@dataclass
+class ChargeDash:
+    scene = None
+    controls = None
 
 
 @dataclass
