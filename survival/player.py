@@ -35,7 +35,7 @@ class ChargeBox(Sprite):
     idle_image = DoNotRender
     active_image = Square(50, 70, 200)
     active = False
-    offsets = [1, 0.33, -0.33, -1]
+    offsets = [1, 0.33, -0.33, -1]  # These are magic and modified by eye.
     size = 0.25
 
     @property

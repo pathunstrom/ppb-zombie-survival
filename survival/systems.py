@@ -56,34 +56,44 @@ class Controller(System):
         elif event.key is key.Space:
             signal(DashRequested())
 
+    @staticmethod
     def on_button_pressed(self, event: ppb_events.ButtonPressed, signal):
         if event.button is button.Primary:
             signal(ChargeSlash())
+        elif event.button is button.Secondary:
+            signal(DrawBow())
 
+    @staticmethod
     def on_button_released(self, event: ppb_events.ButtonReleased, signal):
         if event.button is button.Primary:
             signal(SlashRequested())
 
 
 @dataclass
+class DrawBow:
+    scene = None
+    controls: Controls = None
+
+
+@dataclass
 class ChargeDash:
     scene = None
-    controls = None
+    controls: Controls = None
 
 
 @dataclass
 class DashRequested:
     scene = None
-    controls = None
+    controls: Controls = None
 
 
 @dataclass
 class ChargeSlash:
     scene = None
-    controls = None
+    controls: Controls = None
 
 
 @dataclass
 class SlashRequested:
     scene = None
-    controls = None
+    controls: Controls = None
