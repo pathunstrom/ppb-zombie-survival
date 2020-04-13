@@ -67,6 +67,7 @@ class Player(Sprite):
     target_facing = None
     layer = 5
     dashed_at = None
+    shot_at = None
     slashed_at = None
     charge_level = 0
 
@@ -206,9 +207,24 @@ class DashCharge(ChargeState):
         self.exit_stance(signal)
 
 
+class StowBow(TimedState):
+
+    def on_update(self, event: UpdateInterface, __):
+        self.parent.state = self.return_state
+
+
+class Drawing(ChargeState):
+    state_to_enter = StowBow
+
+    def on_release_bow(self, event, signal):
+        self.parent.shot_at = monotonic()
+        self.exit_stance(signal)
+
+
 class Neutral(State):
     speed = 3  # TODO: CONFIG
     dash_cool_down = 0.75  # TODO: CONFIG
+    shot_cool_down = 1  # TODO: CONFIG
     slash_cool_down = 0.43  # TODO: CONFIG
 
     def on_charge_slash(self, event, signal):
@@ -220,6 +236,11 @@ class Neutral(State):
         now = monotonic()
         if self.parent.dashed_at is None or self.parent.dashed_at + self.dash_cool_down <= now:
             self.parent.state = DashCharge(self.parent, self)
+
+    def on_draw_bow(self, event, signal):
+        now = monotonic()
+        if self.parent.shot_at is None or self.parent.shot_at + self.shot_cool_down <= now:
+            self.parent.state = Drawing(self.parent, self)
 
     def on_update(self, event, signal):
         if self.parent.target_facing is not None:

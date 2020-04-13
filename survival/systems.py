@@ -57,14 +57,14 @@ class Controller(System):
             signal(DashRequested())
 
     @staticmethod
-    def on_button_pressed(self, event: ppb_events.ButtonPressed, signal):
+    def on_button_pressed(event: ppb_events.ButtonPressed, signal):
         if event.button is button.Primary:
             signal(ChargeSlash())
         elif event.button is button.Secondary:
             signal(DrawBow())
 
     @staticmethod
-    def on_button_released(self, event: ppb_events.ButtonReleased, signal):
+    def on_button_released(event: ppb_events.ButtonReleased, signal):
         if event.button is button.Primary:
             signal(SlashRequested())
         elif event.button is button.Secondary:
