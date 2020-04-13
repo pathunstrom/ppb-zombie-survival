@@ -13,7 +13,7 @@ class Sandbox(BaseScene):
     background_color = 0, 0, 0
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(pixel_ration=32, **kwargs)
         player = Player()
         self.add(player)
         for x in range(1, 5):

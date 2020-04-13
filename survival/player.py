@@ -5,7 +5,9 @@ from typing import Type
 
 from ppb import events
 from ppb import Sprite
+from ppb import Vector
 from ppb.assets import Square
+from ppb.assets import Triangle
 from ppb.flags import DoNotRender
 
 from survival import utils
@@ -31,6 +33,20 @@ class HurtBox(Sprite):
 
     def on_update(self, event, _):
         if monotonic() >= self.start + self.life_span:
+            event.scene.remove(self)
+
+
+class Arrow(HurtBox):
+    image = Triangle(224, 218, 56)
+    target = Vector(0, 4)
+    origin = Vector(0, 0)
+    speed = 8
+    size = 0.25
+    layer = 20
+
+    def on_update(self, event, _):
+        self.position += (self.target - self.position).scale_to(self.speed) * event.time_delta
+        if (self.target - self.origin).length <= (self.origin - self.position).length:
             event.scene.remove(self)
 
 
@@ -210,6 +226,14 @@ class DashCharge(ChargeState):
 class StowBow(TimedState):
 
     def on_update(self, event: UpdateInterface, __):
+        target = self.parent.position + self.parent.facing.scale(self.parent.charge_level * 1.5 + 2)
+        origin = self.parent.position
+        event.scene.add(Arrow(
+            target=target,
+            origin=origin,
+            position=origin,
+            facing=-self.parent.facing
+        ))
         self.parent.state = self.return_state
 
 
