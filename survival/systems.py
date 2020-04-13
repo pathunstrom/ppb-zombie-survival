@@ -67,10 +67,18 @@ class Controller(System):
     def on_button_released(self, event: ppb_events.ButtonReleased, signal):
         if event.button is button.Primary:
             signal(SlashRequested())
+        elif event.button is button.Secondary:
+            signal(ReleaseBow())
 
 
 @dataclass
 class DrawBow:
+    scene = None
+    controls: Controls = None
+
+
+@dataclass
+class ReleaseBow:
     scene = None
     controls: Controls = None
 
