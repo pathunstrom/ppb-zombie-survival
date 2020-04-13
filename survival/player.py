@@ -8,9 +8,8 @@ from ppb.assets import Square
 from ppb.flags import DoNotRender
 
 from survival import utils
+from survival import systems as control_events
 from survival.enemies import Body
-from survival.systems import DashRequested
-from survival.systems import SlashRequested
 
 calculate_rotation = utils.asymptotic_average_builder(12)
 
@@ -74,10 +73,16 @@ class Player(Sprite):
     def on_charge_dash(self, event, signal):
         self.state.on_charge_dash(event, signal)
 
-    def on_dash_requested(self, event: DashRequested, signal):
+    def on_dash_requested(self, event: control_events.DashRequested, signal):
         self.state.on_dash_requested(event, signal)
 
-    def on_slash_requested(self, event: SlashRequested, signal):
+    def on_draw_bow(self, event: control_events.DrawBow, signal):
+        self.state.on_draw_bow(event, signal)
+
+    def on_release_bow(self, event: control_events.ReleaseBow, signal):
+        self.state.on_release_bow(event, signal)
+
+    def on_slash_requested(self, event: control_events.SlashRequested, signal):
         self.state.on_slash_requested(event, signal)
 
     def on_mouse_motion(self, event: events.MouseMotion, signal):
