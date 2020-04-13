@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from time import monotonic
+from typing import Any
 from typing import Type
 
 from ppb import events
@@ -12,6 +13,12 @@ from survival import systems as control_events
 from survival.enemies import Body
 
 calculate_rotation = utils.asymptotic_average_builder(12)
+
+
+@dataclass
+class UpdateInterface:
+    scene: Any
+    controls: control_events.Controls
 
 
 class HurtBox(Sprite):
@@ -41,17 +48,17 @@ class ChargeBox(Sprite):
     def image(self):
         return self.active_image if self.active else self.idle_image
 
-    def on_pre_render(self, event, signal):
+    def on_pre_render(self, _, __):
         behind = self.parent.facing * -0.8
         home = behind.rotate(-90).scale(0.40)
         self.position = self.parent.position + behind + (home * self.offsets[self.value - 1])
         self.facing = self.parent.facing
 
-    def on_increased_charge_level(self, event: 'IncreasedChargeLevel', signal):
+    def on_increased_charge_level(self, event: 'IncreasedChargeLevel', _):
         if event.level >= self.value:
             self.active = True
 
-    def on_charge_ended(self, event: 'ChargeEnded', signal):
+    def on_charge_ended(self, _: 'ChargeEnded', __):
         self.active = False
 
 
@@ -88,7 +95,7 @@ class Player(Sprite):
     def on_mouse_motion(self, event: events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)
 
-    def on_update(self, event: events.Update, signal):
+    def on_update(self, event: UpdateInterface, signal):
         self.state.on_update(event, signal)
 
 
@@ -109,10 +116,16 @@ class State:
     def on_dash_requested(self, event, signal):
         pass
 
+    def on_draw_bow(self, event, signal):
+        pass
+
+    def on_release_bow(self, event, signal):
+        pass
+
     def on_slash_requested(self, event, signal):
         pass
 
-    def on_mouse_motion(self, event, signal):
+    def on_mouse_motion(self, event, _):
         self.parent.target_facing = (
                 event.position - self.parent.position
         ).normalize()
