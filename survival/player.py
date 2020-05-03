@@ -12,7 +12,7 @@ from ppb.flags import DoNotRender
 
 from survival import utils
 from survival import systems as control_events
-from survival.enemies import Body
+from survival.hitbox import PlayerHurtBox
 
 calculate_rotation = utils.asymptotic_average_builder(12)
 
@@ -23,20 +23,7 @@ class UpdateInterface:
     controls: control_events.Controls
 
 
-class HurtBox(Sprite):
-    image = Square(150, 40, 40)
-    life_span = .20  # TODO: CONFIG
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.start = monotonic()
-
-    def on_update(self, event, _):
-        if monotonic() >= self.start + self.life_span:
-            event.scene.remove(self)
-
-
-class Arrow(HurtBox):
+class Arrow(PlayerHurtBox):
     image = Triangle(224, 218, 56)
     target = Vector(0, 4)
     origin = Vector(0, 0)
@@ -59,6 +46,7 @@ class ChargeBox(Sprite):
     active = False
     offsets = [1, 0.33, -0.33, -1]  # These are magic and modified by eye.
     size = 0.25
+    layer = 20
 
     @property
     def image(self):
@@ -249,7 +237,7 @@ class Neutral(State):
     speed = 3  # TODO: CONFIG
     dash_cool_down = 0.75  # TODO: CONFIG
     shot_cool_down = 1  # TODO: CONFIG
-    slash_cool_down = 2  # TODO: CONFIG
+    slash_cool_down = 0.5  # TODO: CONFIG
 
     def on_charge_slash(self, event, signal):
         now = monotonic()
@@ -285,9 +273,7 @@ class Slash(TimedState):
         self.start_time = monotonic()
 
     def on_update(self, event, signal):
-        did_end = super().on_update(event, signal)
-        if did_end:
-            event.scene.add(Body(position=self.parent.position + self.parent.facing))
+        super().on_update(event, signal)
         run_time = monotonic() - self.start_time
         current_offset = self.parent.facing.rotate(
             utils.quadratic_ease_in(
@@ -298,7 +284,7 @@ class Slash(TimedState):
             )
         )
         event.scene.add(
-            HurtBox(
+            PlayerHurtBox(
                 position=self.parent.position + current_offset.scale(1)
             )
         )

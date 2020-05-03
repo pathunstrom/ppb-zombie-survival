@@ -1,6 +1,7 @@
 from ppb import BaseScene
 
-from survival.enemies import Body
+from survival.enemies import Enemy
+from survival.hitbox import PlayerHurtBox
 from survival.player import Player
 from survival.player import ChargeBox
 from survival.utils import asymptotic_average_builder
@@ -11,6 +12,8 @@ calc_cam_pos = asymptotic_average_builder(5)
 
 class Sandbox(BaseScene):
     background_color = 0, 0, 0
+    provide_collision = True
+    collision_pairs = [(PlayerHurtBox, Enemy)]
 
     def __init__(self, **kwargs):
         super().__init__(pixel_ration=32, **kwargs)
@@ -19,7 +22,7 @@ class Sandbox(BaseScene):
         for x in range(1, 5):
             self.add(ChargeBox(parent=player, value=x))
         for x in range(2, 11, 2):
-            self.add(Body(position=(0, x)))
+            self.add(Enemy(position=(0, x)), tags=["enemy"])
         self.main_camera.pixel_ratio = 32
 
     def on_pre_render(self, event, signal):
