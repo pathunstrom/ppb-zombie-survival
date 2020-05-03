@@ -8,7 +8,6 @@ from ppb import Sprite
 from ppb.events import Idle
 from ppb.events import SceneContinued
 from ppb.events import SceneStarted
-from ppb.events import Update
 from ppb.systemslib import System
 
 
@@ -19,7 +18,11 @@ class SceneCollisionsDefinition:
 
 
 def does_collide_default(left_sprite, right_sprite):
-    return False
+    width = max(left_sprite.right, right_sprite.left) - min(left_sprite.left, right_sprite.left)
+    height = max(left_sprite.top, right_sprite.top) - min(left_sprite.bottom, right_sprite.bottom)
+    combined_size = left_sprite.size + right_sprite.size
+    result = width <= combined_size and height <= combined_size
+    return result
 
 
 def generate_pairs(left_group, right_group):
@@ -32,12 +35,12 @@ def generate_pairs(left_group, right_group):
 def signal_collision(left_sprite, right_sprite):
     try:
         left_sprite.collided_with(right_sprite)
-    except TypeError:
+    except AttributeError:
         pass
 
     try:
         right_sprite.collided_with(left_sprite)
-    except TypeError:
+    except AttributeError:
         pass
 
 
@@ -60,7 +63,7 @@ class Collider(System):
                 pairs.add((a, b))
         else:
             requires = {Sprite}
-            pairs = {Sprite, Sprite}
+            pairs = {(Sprite, Sprite)}
         self.groups_by_scene[scene] = SceneCollisionsDefinition(requires, pairs)
 
     def calculate_collision(self, scene):
