@@ -7,6 +7,8 @@ from ppb import Vector
 from ppb.engine import GameEngine
 from ppb.systemslib import System
 
+from survival.systems.collider import Collider
+
 
 class Controls:
 
