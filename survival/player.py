@@ -249,11 +249,11 @@ class Neutral(State):
     speed = 3  # TODO: CONFIG
     dash_cool_down = 0.75  # TODO: CONFIG
     shot_cool_down = 1  # TODO: CONFIG
-    slash_cool_down = 0.43  # TODO: CONFIG
+    slash_cool_down = 2  # TODO: CONFIG
 
     def on_charge_slash(self, event, signal):
         now = monotonic()
-        if self.parent.slashed_at is None or self.parent.slashed_at + self.slash_cool_down:
+        if self.parent.slashed_at is None or self.parent.slashed_at + self.slash_cool_down <= now:
             self.parent.state = SwordCharge(self.parent, self)
 
     def on_charge_dash(self, event, signal):
@@ -308,6 +308,7 @@ class SwordCharge(ChargeState):
     state_to_enter = Slash
 
     def on_slash_requested(self, _, signal):
+        self.parent.slashed_at = monotonic()
         self.exit_stance(signal)
 
 

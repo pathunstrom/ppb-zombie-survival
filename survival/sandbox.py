@@ -20,6 +20,7 @@ class Sandbox(BaseScene):
             self.add(ChargeBox(parent=player, value=x))
         for x in range(2, 11, 2):
             self.add(Body(position=(0, x)))
+        self.main_camera.pixel_ratio = 32
 
     def on_pre_render(self, event, signal):
         player = next(self.get(kind=Player))
