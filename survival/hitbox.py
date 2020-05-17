@@ -22,6 +22,7 @@ class HurtBox(Sprite):
     image = Square(150, 40, 40)
     life_span = .20  # TODO: CONFIG
     layer = -10
+    intensity = 1
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
