@@ -13,7 +13,7 @@ calc_cam_pos = asymptotic_average_builder(5)
 class Sandbox(BaseScene):
     background_color = 0, 0, 0
     provide_collision = True
-    collision_pairs = [(PlayerHurtBox, Enemy)]
+    collision_pairs = [(PlayerHurtBox, Enemy), (Enemy, Enemy)]
 
     def __init__(self, **kwargs):
         super().__init__(pixel_ration=32, **kwargs)
