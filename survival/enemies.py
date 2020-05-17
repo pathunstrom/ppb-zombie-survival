@@ -17,7 +17,7 @@ class Enemy(Sprite):
 
     def collided_with(self, other: PlayerHurtBox):
         if self.push_velocity is None:
-            self.push_velocity = (self.position - other.position).scale_to(other.intensity * 3)
+            self.push_velocity = (self.position - other.position).scale_to(other.intensity ** 1.75)
             self.stunned = True
 
     def on_update(self, event:Update, signal):

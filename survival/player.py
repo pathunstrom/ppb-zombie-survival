@@ -220,7 +220,8 @@ class StowBow(TimedState):
             target=target,
             origin=origin,
             position=origin,
-            facing=-self.parent.facing
+            facing=-self.parent.facing,
+            intensity=self.parent.charge_level + 1
         ))
         self.parent.state = self.return_state
 
@@ -285,7 +286,8 @@ class Slash(TimedState):
         )
         event.scene.add(
             PlayerHurtBox(
-                position=self.parent.position + current_offset.scale(1)
+                position=self.parent.position + current_offset.scale(1),
+                intensity=self.parent.charge_level + 1
             )
         )
 
