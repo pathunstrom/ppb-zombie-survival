@@ -1,18 +1,18 @@
 from typing import Union
 
 from ppb import Sprite
-from ppb.assets import Circle, Square
 from ppb.events import Update
 
+from survival.assets import zombie, dead_zombie
 from survival.hitbox import PlayerHurtBox
 
 
 class Body(Sprite):
-    image = Circle(79, 140, 105)
+    image = dead_zombie
 
 
 class Enemy(Sprite):
-    image = Square(117, 163, 128)
+    image = zombie
     dead = False
     push_velocity = None
     stunned = False

@@ -12,6 +12,7 @@ from ppb.flags import DoNotRender
 
 from survival import utils
 from survival import systems as control_events
+from survival.assets import player
 from survival.hitbox import PlayerHurtBox
 
 calculate_rotation = utils.asymptotic_average_builder(12)
@@ -67,13 +68,14 @@ class ChargeBox(Sprite):
 
 
 class Player(Sprite):
-    image = Square(200, 55, 40)
+    image = player
     target_facing = None
     layer = 5
     dashed_at = None
     shot_at = None
     slashed_at = None
     charge_level = 0
+    basis = Vector(0, 1)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
