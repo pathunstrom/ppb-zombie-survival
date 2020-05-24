@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='zombie-survival',
     version='0.1',
-    packages=['survival'],
+    packages=['survival', 'behavior_tree'],
     url='',
     license='',
     author='Piper Thunstrom',
