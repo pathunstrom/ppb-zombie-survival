@@ -3,19 +3,61 @@ from time import monotonic
 from typing import Any
 from typing import Type
 
-from ppb import events
+import behavior_tree as bt
+from ppb import events as ppb_events
 from ppb import Sprite
 from ppb import Vector
 from ppb.assets import Square
 from ppb.assets import Triangle
 from ppb.flags import DoNotRender
 
+from survival import actions
+from survival import events
 from survival import utils
 from survival import systems as control_events
 from survival.assets import player
 from survival.hitbox import PlayerHurtBox
 
 calculate_rotation = utils.asymptotic_average_builder(12)
+
+
+SLASH_LEVEL_1_TIME = 0.4
+SLASH_LEVEL_2_TIME = 0.8
+SLASH_LEVEL_3_TIME = 1.2
+SLASH_LEVEL_4_TIME = 1.6
+
+
+class BTPlayer(Sprite, bt.BehaviorMixin):
+    image = player
+    basis = Vector(0, 1)
+    speed = 3
+    target_facing = None
+    slash_charge_levels = [
+        SLASH_LEVEL_1_TIME,
+        SLASH_LEVEL_2_TIME,
+        SLASH_LEVEL_3_TIME,
+        SLASH_LEVEL_4_TIME
+    ]
+    slash_charge = 0
+
+    behavior_tree = bt.Priority(
+        bt.Priority(
+            actions.Slash(PlayerHurtBox),
+            bt.Concurrent(  # Build a slash charge
+                actions.CheckButtonControl("slash"),
+                actions.BuildCharge("slash", slash_charge_levels)
+            ),
+        ),
+        bt.Sequence(
+            actions.ControlsMove(),
+            actions.ChangeFacing(12),  # TODO: Configure
+        )
+    )
+
+    def on_mouse_motion(self, event, signal):
+        self.target_facing = (
+                event.position - self.position
+        ).normalize()
 
 
 @dataclass
@@ -59,11 +101,11 @@ class ChargeBox(Sprite):
         self.position = self.parent.position + behind + (home * self.offsets[self.value - 1])
         self.facing = self.parent.facing
 
-    def on_increased_charge_level(self, event: 'IncreasedChargeLevel', _):
+    def on_increased_charge_level(self, event: events.IncreasedChargeLevel, _):
         if event.level >= self.value:
             self.active = True
 
-    def on_charge_ended(self, _: 'ChargeEnded', __):
+    def on_charge_ended(self, _: events.ChargeEnded, __):
         self.active = False
 
 
@@ -99,7 +141,7 @@ class Player(Sprite):
     def on_slash_requested(self, event: control_events.SlashRequested, signal):
         self.state.on_slash_requested(event, signal)
 
-    def on_mouse_motion(self, event: events.MouseMotion, signal):
+    def on_mouse_motion(self, event: ppb_events.MouseMotion, signal):
         self.state.on_mouse_motion(event, signal)
 
     def on_update(self, event: UpdateInterface, signal):
@@ -159,12 +201,12 @@ class ChargeState(State):
         now = monotonic()
         if self.level < 4 and now >= self.levels[self.level]:
             self.level += 1
-            signal(IncreasedChargeLevel(self.level))
+            signal(events.IncreasedChargeLevel(self.parent, self.level))
 
     def exit_stance(self, signal):
         self.parent.charge_level = self.level
         self.parent.state = self.state_to_enter(self.parent, self.return_state)
-        signal(ChargeEnded(self.level))
+        signal(events.ChargeEnded(self.parent, self.level))
 
 
 class TimedState(State):
@@ -300,13 +342,3 @@ class SwordCharge(ChargeState):
     def on_slash_requested(self, _, signal):
         self.parent.slashed_at = monotonic()
         self.exit_stance(signal)
-
-
-@dataclass
-class IncreasedChargeLevel:
-    level: int
-
-
-@dataclass
-class ChargeEnded:
-    level: int

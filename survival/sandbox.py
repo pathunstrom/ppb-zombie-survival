@@ -2,7 +2,7 @@ from ppb import BaseScene
 
 from survival.enemies import Enemy
 from survival.hitbox import PlayerHurtBox
-from survival.player import Player
+from survival.player import BTPlayer as Player
 from survival.player import ChargeBox
 from survival.utils import asymptotic_average_builder
 
