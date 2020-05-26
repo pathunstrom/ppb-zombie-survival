@@ -5,6 +5,7 @@ from typing import Tuple
 from ppb import Vector
 from ppb import Sprite
 from ppb import Square
+from ppb import Triangle
 
 
 @dataclass
@@ -39,3 +40,17 @@ class PlayerHurtBox(HurtBox):
 
 class EnemyHurtBox(HurtBox):
     image = Square(150, 75, 30)
+
+
+class Arrow(PlayerHurtBox):
+    image = Triangle(224, 218, 56)
+    target = Vector(0, 4)
+    origin = Vector(0, 0)
+    speed = 8
+    size = 0.25
+    layer = 20
+
+    def on_update(self, event, _):
+        self.position += (self.target - self.position).scale_to(self.speed) * event.time_delta
+        if (self.target - self.origin).length <= (self.origin - self.position).length:
+            event.scene.remove(self)

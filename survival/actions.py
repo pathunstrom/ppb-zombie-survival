@@ -8,11 +8,12 @@ from ppb import BaseScene
 from ppb import Sprite
 
 from survival import events
+from survival import hitbox
 from survival import utils
 from survival.systems import Controls
 
 
-__all__ = ['ControlsMove', 'ChangeFacing', 'BuildCharge']
+__all__ = ['ControlsMove', 'ChangeFacing', 'BuildCharge', 'CheckButtonControl']
 
 
 @dataclass
@@ -59,14 +60,13 @@ class ControlsMove(bt.Node):
 
 class SlashHurtBoxArc(bt.Node):
 
-    def __init__(self, start_time_attribute, hurtbox):
+    def __init__(self, start_time_attribute):
         self.initial_rotation = 60
         self.change_in_rotation = -80
         self.run_time = .192
         self.start_time_attribute = start_time_attribute
         self.distance_offset = 1
         self.size = 1
-        self.hurtbox = hurtbox
 
     def visit(self, actor: Any, context: bt.Context) -> bt.State:
         run_time = perf_counter() - getattr(actor, self.start_time_attribute)
@@ -78,27 +78,52 @@ class SlashHurtBoxArc(bt.Node):
                 self.run_time
             )
         ).scale_to(self.distance_offset)
-        context.scene.add(self.hurtbox(position=actor.position + offset, intensity=actor.slash_charge))
+        context.scene.add(hitbox.PlayerHurtBox(position=actor.position + offset, intensity=actor.slash_charge))
         if run_time >= self.run_time:
             return bt.State.SUCCESS
         return bt.State.RUNNING
 
 
-def Slash(hurtbox) -> bt.Node:
-    start_time_attribute = "slash_start_time"
-    charge_name = "slash_charge"
+class ReleaseArrow(bt.Node):
+
+    def __init__(self, start_time_attribute):
+        super().__init__()
+
+    def visit(self, actor: Any, context: bt.Context) -> bt.State:
+        target = actor.position + actor.facing.scale(actor.shoot_charge * 1.5 + 2)
+        origin = actor.position
+        context.scene.add(hitbox.Arrow(
+            target=target,
+            origin=origin,
+            position=origin,
+            facing=-actor.facing,
+            intensity=actor.shoot_charge + 1
+        ))
+        return bt.State.SUCCESS
+
+
+def TakeChargeAction(name, action, recovery_time=.016):
+    start_time_attribute = f"{name}_start_time"
+    charge_name_attr = f"{name}_charge"
+    charge_time_start_attr = f"{name}_charge_start_time"
 
     def end_charge_level_params(actor):
         yield actor
-        yield getattr(actor, charge_name, 0)
+        yield getattr(actor, charge_name_attr, 0)
 
     return bt.Sequence(
-        bt.Inverter(CheckButtonControl("slash")),
-        bt.ThrowEventOnSuccess(bt.CheckValue("slash_charge_start_time"), event_type=events.ChargeEnded, get_event_params=end_charge_level_params),
+        bt.Inverter(CheckButtonControl(name)),
+        bt.ThrowEventOnSuccess(
+            bt.CheckValue(charge_time_start_attr),
+            event_type=events.ChargeEnded,
+            get_event_params=end_charge_level_params
+        ),
         bt.SetCurrentTime(start_time_attribute),
-        SlashHurtBoxArc(start_time_attribute, hurtbox),
-        bt.SetValue("slash_charge_start_time", None),
-        bt.SetValue(charge_name, 0)
+        action(start_time_attribute),
+        bt.SetValue(charge_time_start_attr, None),
+        bt.SetValue(charge_name_attr, 0),
+        bt.SetCurrentTime("charge_action_recovery"),
+        bt.Wait("charge_action_recovery", recovery_time)
     )
 
 

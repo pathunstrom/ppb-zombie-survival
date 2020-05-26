@@ -9,6 +9,7 @@ from survival.hitbox import PlayerHurtBox
 
 class Body(Sprite):
     image = dead_zombie
+    layer = -5
 
 
 class Enemy(Sprite):

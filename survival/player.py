@@ -8,7 +8,6 @@ from ppb import events as ppb_events
 from ppb import Sprite
 from ppb import Vector
 from ppb.assets import Square
-from ppb.assets import Triangle
 from ppb.flags import DoNotRender
 
 from survival import actions
@@ -26,6 +25,11 @@ SLASH_LEVEL_2_TIME = 0.8
 SLASH_LEVEL_3_TIME = 1.2
 SLASH_LEVEL_4_TIME = 1.6
 
+ARROW_LEVEL_1_TIME = 0.4
+ARROW_LEVEL_2_TIME = 0.8
+ARROW_LEVEL_3_TIME = 1.2
+ARROW_LEVEL_4_TIME = 1.6
+
 
 class BTPlayer(Sprite, bt.BehaviorMixin):
     image = player
@@ -39,14 +43,27 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
         SLASH_LEVEL_4_TIME
     ]
     slash_charge = 0
-
+    shoot_charge_levels = [
+        ARROW_LEVEL_1_TIME,
+        ARROW_LEVEL_2_TIME,
+        ARROW_LEVEL_3_TIME,
+        ARROW_LEVEL_4_TIME
+    ]
+    shoot_charge = 0
     behavior_tree = bt.Priority(
         bt.Priority(
-            actions.Slash(PlayerHurtBox),
+            actions.TakeChargeAction("slash", actions.SlashHurtBoxArc),
             bt.Concurrent(  # Build a slash charge
                 actions.CheckButtonControl("slash"),
                 actions.BuildCharge("slash", slash_charge_levels)
             ),
+        ),
+        bt.Priority(
+            actions.TakeChargeAction("shoot", actions.ReleaseArrow),
+            bt.Concurrent(
+                actions.CheckButtonControl("shoot"),
+                actions.BuildCharge("shoot", shoot_charge_levels)
+            )
         ),
         bt.Sequence(
             actions.ControlsMove(),
@@ -66,18 +83,6 @@ class UpdateInterface:
     controls: control_events.Controls
 
 
-class Arrow(PlayerHurtBox):
-    image = Triangle(224, 218, 56)
-    target = Vector(0, 4)
-    origin = Vector(0, 0)
-    speed = 8
-    size = 0.25
-    layer = 20
-
-    def on_update(self, event, _):
-        self.position += (self.target - self.position).scale_to(self.speed) * event.time_delta
-        if (self.target - self.origin).length <= (self.origin - self.position).length:
-            event.scene.remove(self)
 
 
 class ChargeBox(Sprite):
