@@ -57,6 +57,65 @@ class ControlsMove(bt.Node):
             actor.position += event.controls.walk.scale(actor.speed * event.time_delta)
         return bt.State.SUCCESS
 
+# class Dash(TimedState):
+#     target_change = None
+#     start_location = None
+#     duration = 0.25  # TODO: CONFIG
+#     start_time = None
+#     dash_lengths = [2, 3, 4, 5, 6]  # TODO: CONFIG
+#
+#     def on_update(self, event, signal):
+#         super().on_update(event, signal)
+#         if self.target_change is None:
+#             target_location = self.parent.target_facing.scale(self.dash_lengths[self.parent.charge_level])
+#             self.target_change = target_location
+#             self.start_location = self.parent.position
+#             self.parent.charge_level = 0
+#         run_time = monotonic() - self.start_time
+#         self.parent.position = utils.quadratic_ease_out(
+#             run_time,
+#             self.start_location,
+#             self.target_change,
+#             self.duration
+#         )
+
+
+class PrepareDash(bt.Node):
+    dash_lengths = [2, 3, 4, 5, 6]
+
+    def visit(self, actor: Any, context: bt.Context) -> bt.State:
+        actor.position_change = actor.target_facing.scale(self.dash_lengths[actor.dash_charge])
+        actor.dash_start_position = actor.position
+        return bt.State.SUCCESS
+
+
+class DashMove(bt.Node):
+    duration = 0.25
+
+    def __init__(self, start_time_attribute):
+        self.start_time_attribute = start_time_attribute
+
+    def visit(self, actor: Any, context: bt.Context) -> bt.State:
+        run_time = perf_counter() - getattr(actor, self.start_time_attribute)
+        if run_time >= self.duration:
+            actor.position = actor.dash_start_position + actor.position_change
+            return bt.State.SUCCESS
+        else:
+            actor.position = utils.quadratic_ease_out(
+                run_time,
+                actor.dash_start_position,
+                actor.position_change,
+                self.duration
+            )
+            return bt.State.RUNNING
+
+
+def Dash(start_time_attribute):
+    return bt.Sequence(
+        PrepareDash(),
+        DashMove(start_time_attribute)
+    )
+
 
 class SlashHurtBoxArc(bt.Node):
 

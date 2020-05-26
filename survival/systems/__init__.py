@@ -12,7 +12,7 @@ from survival.systems.collider import Collider
 
 class Controls:
 
-    def __init__(self, walk: Vector, slash: bool, shoot: bool):
+    def __init__(self, walk: Vector, slash: bool, shoot: bool, dash: bool):
         """
 
         :param walk: A vector with the X value of [-1, 1] and y value of
@@ -21,6 +21,7 @@ class Controls:
         self.walk = walk
         self.slash = slash
         self.shoot = shoot
+        self.dash = dash
 
 
 class Controller(System):
@@ -28,6 +29,7 @@ class Controller(System):
     vertical = 0
     slash = False
     shoot = False
+    dash = False
 
     def __init__(self, *, engine: GameEngine, **kwargs):
         super().__init__(**kwargs)
@@ -37,7 +39,8 @@ class Controller(System):
         event.controls = Controls(
             walk=Vector(self.horizontal, self.vertical),
             slash=self.slash,
-            shoot=self.shoot
+            shoot=self.shoot,
+            dash=self.dash
         )
 
     def on_key_pressed(self, event: ppb_events.KeyPressed, signal):
@@ -50,7 +53,7 @@ class Controller(System):
         elif event.key is key.D:
             self.horizontal += 1
         elif event.key is key.Space:
-            signal(ChargeDash())
+            self.dash = True
 
     def on_key_released(self, event: ppb_events.KeyReleased, signal):
         if event.key is key.W:
@@ -62,7 +65,7 @@ class Controller(System):
         elif event.key is key.D:
             self.horizontal += -1
         elif event.key is key.Space:
-            signal(DashRequested())
+            self.dash = False
 
     def on_button_pressed(self, event: ppb_events.ButtonPressed, signal):
         if event.button is button.Primary:
