@@ -9,5 +9,5 @@ setup(
     author='Piper Thunstrom',
     author_email='pathunstrom@gmail.com',
     description='A simple action game.',
-    install_requires=['ppb>=0.8'],
+    install_requires=['ppb>=0.9.0b1'],
 )

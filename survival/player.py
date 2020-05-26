@@ -2,7 +2,6 @@ import behavior_tree as bt
 from ppb import Sprite
 from ppb import Vector
 from ppb.assets import Square
-from ppb.flags import DoNotRender
 
 from survival import actions
 from survival import events
@@ -73,6 +72,7 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
             actions.TakeChargeAction("shoot", actions.ReleaseArrow),
             bt.Concurrent(
                 actions.CheckButtonControl("shoot"),
+                actions.CheckButtonControl("shoot"),
                 actions.BuildCharge("shoot", shoot_charge_levels)
             )
         ),
@@ -92,7 +92,7 @@ class ChargeBox(Sprite):
     """Temporary debug item."""
     parent: 'Player'
     value: int = 4
-    idle_image = DoNotRender
+    idle_image = None
     active_image = Square(50, 70, 200)
     active = False
     offsets = [1, 0.33, -0.33, -1]  # These are magic and modified by eye.
