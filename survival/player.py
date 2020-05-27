@@ -15,17 +15,21 @@ SLASH_LEVEL_1_TIME = 0.4
 SLASH_LEVEL_2_TIME = 0.8
 SLASH_LEVEL_3_TIME = 1.2
 SLASH_LEVEL_4_TIME = 1.6
+SLASH_COOL_DOWN = 0.5
 
-ARROW_LEVEL_1_TIME = 0.4
-ARROW_LEVEL_2_TIME = 0.8
-ARROW_LEVEL_3_TIME = 1.2
-ARROW_LEVEL_4_TIME = 1.6
+SHOOT_LEVEL_1_TIME = 0.4
+SHOOT_LEVEL_2_TIME = 0.8
+SHOOT_LEVEL_3_TIME = 1.2
+SHOOT_LEVEL_4_TIME = 1.6
+SHOOT_COOL_DOWN = 1
 
 DASH_LEVEL_1_TIME = 0.4
 DASH_LEVEL_2_TIME = 0.8
 DASH_LEVEL_3_TIME = 1.2
 DASH_LEVEL_4_TIME = 1.6
+DASH_COOL_DOWN = 0.75
 
+FACING_NEW_PART_PERCENT = 12
 
 class BTPlayer(Sprite, bt.BehaviorMixin):
     image = player
@@ -40,10 +44,10 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
     ]
     slash_charge = 0
     shoot_charge_levels = [
-        ARROW_LEVEL_1_TIME,
-        ARROW_LEVEL_2_TIME,
-        ARROW_LEVEL_3_TIME,
-        ARROW_LEVEL_4_TIME
+        SHOOT_LEVEL_1_TIME,
+        SHOOT_LEVEL_2_TIME,
+        SHOOT_LEVEL_3_TIME,
+        SHOOT_LEVEL_4_TIME
     ]
     shoot_charge = 0
     dash_charge_levels = [
@@ -54,31 +58,40 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
     ]
     dash_charge = 0
     behavior_tree = bt.Priority(
-        bt.Priority(
-            actions.TakeChargeAction("dash", actions.Dash),
-            bt.Concurrent(
-                actions.CheckButtonControl("dash"),
-                actions.BuildCharge("dash", dash_charge_levels)
-            )
-        ),
-        bt.Priority(
-            actions.TakeChargeAction("slash", actions.SlashHurtBoxArc),
-            bt.Concurrent(  # Build a slash charge
-                actions.CheckButtonControl("slash"),
-                actions.BuildCharge("slash", slash_charge_levels)
+        bt.Debounce(
+            bt.Priority(
+                actions.TakeChargeAction("dash", actions.Dash),
+                bt.Concurrent(
+                    actions.CheckButtonControl("dash"),
+                    actions.BuildCharge("dash", dash_charge_levels)
+                )
             ),
+            cool_down=DASH_COOL_DOWN
         ),
-        bt.Priority(
-            actions.TakeChargeAction("shoot", actions.ReleaseArrow),
-            bt.Concurrent(
-                actions.CheckButtonControl("shoot"),
-                actions.CheckButtonControl("shoot"),
-                actions.BuildCharge("shoot", shoot_charge_levels)
-            )
+        bt.Debounce(
+            bt.Priority(
+                actions.TakeChargeAction("slash", actions.SlashHurtBoxArc),
+                bt.Concurrent(  # Build a slash charge
+                    actions.CheckButtonControl("slash"),
+                    actions.BuildCharge("slash", slash_charge_levels)
+                ),
+            ),
+            cool_down=SLASH_COOL_DOWN
+        ),
+        bt.Debounce(
+            bt.Priority(
+                actions.TakeChargeAction("shoot", actions.ReleaseArrow),
+                bt.Concurrent(
+                    actions.CheckButtonControl("shoot"),
+                    actions.CheckButtonControl("shoot"),
+                    actions.BuildCharge("shoot", shoot_charge_levels)
+                ),
+            ),
+            cool_down=SHOOT_COOL_DOWN
         ),
         bt.Sequence(
             actions.ControlsMove(),
-            actions.ChangeFacing(12),  # TODO: Configure
+            actions.ChangeFacing(FACING_NEW_PART_PERCENT),
         )
     )
 

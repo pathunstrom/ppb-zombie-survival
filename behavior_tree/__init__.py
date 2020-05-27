@@ -30,6 +30,14 @@ class Node:
     def reset(self):
         self.state = State.READY
 
+    def __repr__(self):
+        values = []
+        for k, v in vars(self).items():
+            if isinstance(v, Node):
+                v = f"{type(v).__name__}(...)"
+            values.append(f"{k}={v}")
+        return f"{type(self).__name__}({', '.join(values)})"
+
 
 class Selector(Node):
     stop_states: List[State]
@@ -87,17 +95,14 @@ class Concurrent(Selector):
 
     def visit(self, actor: 'BehaviorMixin', context: Context) -> State:
         num_failed = 0
-        self.state = State.SUCCESS
+        states = []
         for child in self.children:
-            result = child.visit(actor, context)
-            if result is State.FAILED:
-                num_failed += 1
-            elif result is State.RUNNING:
-                self.state = State.RUNNING
-            if num_failed >= self.num_fail:
-                self.state = State.FAILED
-                break
-        return self.state
+            states.append(child.visit(actor, context))
+            if sum(1 for state in states if state is State.FAILED) >= self.num_fail:
+                return State.FAILED
+        if all(state == State.SUCCESS for state in states):
+            return State.SUCCESS
+        return State.RUNNING
 
 
 class Decorator(Node):
@@ -143,6 +148,23 @@ class ThrowEventOnSuccess(Decorator):
         result = self.child.visit(actor, context)
         if result is State.SUCCESS:
             context.signal(self.event_type(*self.get_event_params(actor)))
+        return result
+
+
+class Debounce(Decorator):
+
+    def __init__(self, child, *, cool_down=0.5, timer=perf_counter):
+        super().__init__(child)
+        self.cool_down = cool_down
+        self.timer = timer
+        self.attr = f"debounce_{id(self)}_last"
+
+    def visit(self, actor: 'BehaviorMixin', context: Context) -> State:
+        if self.timer() <= getattr(actor, self.attr, -10) + self.cool_down:
+            return State.FAILED
+        result = self.child.visit(actor, context)
+        if result is State.SUCCESS:
+            setattr(actor, self.attr, self.timer())
         return result
 
 
@@ -196,6 +218,12 @@ class Wait(Node):
         now = self.timer()
         if now >= start_time + self.wait_time:
             return State.SUCCESS
+        return State.RUNNING
+
+
+class Idle(Node):
+
+    def visit(self, actor: 'BehaviorMixin', context: Context) -> State:
         return State.RUNNING
 
 

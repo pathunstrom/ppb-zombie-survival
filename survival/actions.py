@@ -207,5 +207,6 @@ def BuildCharge(action_name, levels) -> bt.Node:
             bt.IncreaseValue(charge_name),
             event_type=events.IncreasedChargeLevel,
             get_event_params=increase_charge_level_params
-        )
+        ),
+        bt.Idle()
     )
