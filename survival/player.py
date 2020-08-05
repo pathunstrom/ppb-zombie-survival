@@ -1,7 +1,11 @@
-import behavior_tree as bt
+import misbehave as bt
+from misbehave import action
+from misbehave import decorator
+from misbehave import selector
 from ppb import Sprite
 from ppb import Vector
 from ppb.assets import Square
+import ppb_misbehave as bt_pbb
 
 from survival import actions
 from survival import events
@@ -31,7 +35,8 @@ DASH_COOL_DOWN = 0.75
 
 FACING_NEW_PART_PERCENT = 12
 
-class BTPlayer(Sprite, bt.BehaviorMixin):
+
+class BTPlayer(Sprite, bt_pbb.BehaviorMixin):
     image = player
     basis = Vector(0, 1)
     speed = 3
@@ -57,39 +62,39 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
         DASH_LEVEL_4_TIME
     ]
     dash_charge = 0
-    behavior_tree = bt.Priority(
-        bt.Debounce(
-            bt.Priority(
+    behavior_tree = bt.selector.Priority(
+        bt.decorator.Debounce(
+            bt.selector.Priority(
                 actions.TakeChargeAction("dash", actions.Dash),
-                bt.Concurrent(
+                bt.selector.Concurrent(
                     actions.CheckButtonControl("dash"),
                     actions.BuildCharge("dash", dash_charge_levels)
                 )
             ),
-            cool_down=DASH_COOL_DOWN
+            delay=DASH_COOL_DOWN
         ),
-        bt.Debounce(
-            bt.Priority(
+        bt.decorator.Debounce(
+            bt.selector.Priority(
                 actions.TakeChargeAction("slash", actions.SlashHurtBoxArc),
-                bt.Concurrent(  # Build a slash charge
+                bt.selector.Concurrent(  # Build a slash charge
                     actions.CheckButtonControl("slash"),
                     actions.BuildCharge("slash", slash_charge_levels)
                 ),
             ),
-            cool_down=SLASH_COOL_DOWN
+            delay=SLASH_COOL_DOWN
         ),
-        bt.Debounce(
-            bt.Priority(
+        bt.decorator.Debounce(
+            bt.selector.Priority(
                 actions.TakeChargeAction("shoot", actions.ReleaseArrow),
-                bt.Concurrent(
+                bt.selector.Concurrent(
                     actions.CheckButtonControl("shoot"),
                     actions.CheckButtonControl("shoot"),
                     actions.BuildCharge("shoot", shoot_charge_levels)
                 ),
             ),
-            cool_down=SHOOT_COOL_DOWN
+            delay=SHOOT_COOL_DOWN
         ),
-        bt.Sequence(
+        bt.selector.Sequence(
             actions.ControlsMove(),
             actions.ChangeFacing(FACING_NEW_PART_PERCENT),
         )
@@ -103,7 +108,7 @@ class BTPlayer(Sprite, bt.BehaviorMixin):
 
 class ChargeBox(Sprite):
     """Temporary debug item."""
-    parent: 'Player'
+    parent: 'BTPlayer'
     value: int = 4
     idle_image = None
     active_image = Square(50, 70, 200)
